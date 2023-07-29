@@ -1,4 +1,4 @@
-(in-package :s3zmq)
+(in-package :shop3-zmq)
 
 (defparameter *endpoint* "tcp://localhost:31726")
 
@@ -24,16 +24,23 @@
 (defun server-loop (&optional (listen-address "tcp://*:31726")) ; See *endpoint* above.
   "Translation of http://zguide.zeromq.org/c:hwserver updated for ZMQ 3. "
   (handler-case
-      (pzmq:with-context nil ; use *default-context*
+      (pzmq:with-context (ctx :max-sockets 10)
 	(pzmq:with-socket responder :rep
 	  (pzmq:bind responder listen-address)
 	  (loop
-	    ;(format t "~%Waiting for a request... ")
+	    ;;(format t "~%Waiting for a request... ")
 	    (let ((got (pzmq:recv-string responder)))
-	      (log-msg (format nil "Server receives: ~S" got))
-	      (let ((result (ask-shop got)))
-		(log-msg (format nil "Server replying: ~A" (fmt-msg result)) result)
-		(pzmq:send responder (format nil (fmt-msg result) result)))))))
+	      (if (string-equal got "(sb-ext:exit)")
+		  (progn
+		    (pzmq:send responder ":bye!")
+		    (log-msg (format nil "-----Server shutting down on  ~S----" got))
+		    (sleep 2)
+		    (sb-ext:exit))
+		  (progn
+		   (log-msg (format nil "Server receives: ~S" got))
+		   (let ((result (ask-shop got)))
+		     (log-msg (format nil "Server replying: ~A" (fmt-msg result)) result)
+		     (pzmq:send responder (format nil (fmt-msg result) result)))))))))
     (serious-condition (c)
       (log-msg "Server stopping ~A" c))))
 

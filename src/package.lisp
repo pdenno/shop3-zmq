@@ -2,5 +2,6 @@
 
 (defpackage :shop3-zmq
   (:nicknames :s3zmq)
-  (:use :cl :shop2 :asdf/interface)
+  (:shadowing-import-from :pzmq #:close #:version)
+  (:use :cl :shop3 :pzmq :asdf/interface)
   (:export #:start-server))

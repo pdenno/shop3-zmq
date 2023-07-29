@@ -5,6 +5,7 @@
 
 (ql:quickload "fiveam")
 (ql:quickload "bordeaux-threads")
+(ql:quickload "local-time")
 (ql:quickload "pzmq")
 (ql:quickload "shop3")
 (ql:quickload "cl-ppcre") ; Perl-compatible regular expressions
@@ -15,4 +16,4 @@
 
 ;;; Once all the above is okay, you can call it from shell with ./save-lisp.sh and this line uncommented:
 ;;; I copy these to ~/Documents/lisp
-;;;(sb-ext:save-lisp-and-die "pzmq-shop3-2023-07-29" :purify t :executable t :toplevel 's3zmq:start-server)
+(sb-ext:save-lisp-and-die "pzmq-shop3-2023-07-29" :purify t :executable t :toplevel 's3zmq:start-server)
