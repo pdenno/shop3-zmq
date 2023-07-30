@@ -27,6 +27,11 @@
       (pzmq:with-context (ctx :max-sockets 10)
 	(pzmq:with-socket responder :rep
 	  (pzmq:bind responder listen-address)
+	  ;; Flush messages from prior invocations.
+	  (handler-case
+	      (dotimes (i 1000) (pzmq:recv-string responder :dontwait t))
+	    (serious-condition (c)
+	      (log-msg "Ignoring flush errors: ~A" c)))
 	  (loop
 	    ;;(format t "~%Waiting for a request... ")
 	    (let ((got (pzmq:recv-string responder)))
@@ -42,7 +47,8 @@
 		     (log-msg (format nil "Server replying: ~A" (fmt-msg result)) result)
 		     (pzmq:send responder (format nil (fmt-msg result) result)))))))))
     (serious-condition (c)
-      (log-msg "Server stopping ~A" c))))
+      (log-msg "Server stopping ~A" c)
+      (kill-server))))
 
 (defun fmt-msg (msg)
   "Return a format string for a message"
