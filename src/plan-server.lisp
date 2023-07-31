@@ -12,8 +12,6 @@
       (log-msg  "Serious condition: ~A" e)
       :bad-input)))
 
-(declaim (ftype (function (&optional boolean) t) stop-server))
-
 (defun server-loop (&optional (listen-address "tcp://*:31726")) ; See *endpoint* above.
   "Translation of http://zguide.zeromq.org/c:hwserver updated for ZMQ 3. "
   (handler-case
@@ -22,6 +20,7 @@
 	  (pzmq:bind responder listen-address)
 	  ;; Flush messages from prior invocations.
 	  ;; recv-string actually returns values; second value is about rcvmore.
+	  ;; ToDo: Determine whether this or the proper ctx shutdown fixed things.
 	  (dotimes (i 2000)
 	    (handler-case
 		(progn (log-msg "Flushing ~S" (pzmq:recv-string responder :dontwait t))
@@ -30,18 +29,16 @@
 	  (log-msg "Entering server loop")
 	  (loop
 	    ;;(log-msg "Waiting for a request... ")
-	    (let ((got (pzmq:recv-string responder))) ; See above about more. (This will matter for big defdomains.)
+	    (let ((got (pzmq:recv-string responder))) ; See above about more. (This will matter for if I send big defdomains.)
 	      (log-msg "Server receives: ~S" got)
 	      (if (string-equal got "(sb-ext:exit)")
 		  (progn
 		    (log-msg "-----Server shutting down on  ~S----" got)
 		    (pzmq:send responder ":bye!")
-		    (log-msg "after bye")
+		    (log-msg "Returned bye.")
 		    (sleep 0.1)
 		    (pzmq:close responder)   ;  See Page 20 in the PDF.
-		    (log-msg "after close")
 		    (pzmq:ctx-shutdown ctx)
-		    (log-msg "after shutdown")
 		    (pzmq:ctx-term ctx)      ;  See Page 20 in the PDF.
 		    (log-msg "Exiting lisp.")
 		    (sb-ext:exit))
