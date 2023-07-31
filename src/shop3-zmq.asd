@@ -7,4 +7,5 @@
   :depends-on ("shop3")
   :serial t
   :components ((:file "package")
+	       (:file "util")
 	       (:file "plan-server")))
