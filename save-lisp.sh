@@ -12,3 +12,6 @@
 #      is commented out. Uncommented it, rename the image (typically) and do it again.
 
 sbcl --load /home/pdenno/Documents/git/shop3-zmq/load.lisp
+
+# This one for an executable interactive you can use with slime.
+# sbcl --load /home/pdenno/Documents/git/shop3-zmq/load-shop-interactive.lisp
