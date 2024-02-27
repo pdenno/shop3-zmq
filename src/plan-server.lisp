@@ -1,18 +1,30 @@
 (in-package :shop3-zmq)
 
-(defparameter *endpoint* "tcp://localhost:31726")
+(defvar *endpoint* "tcp://*:31888")
+(defvar *diag* nil)
 
 (defun ask-shop (request-str)
-  "Eval request string in :shop2-user package."
-  (handler-case
-      (let* ((*package* (find-package :shop3-user))
-	     (form (read-from-string request-str)))
-	(eval form))
-    (serious-condition (e)
-      (log-msg  "Serious condition: ~A" e)
-      :bad-input)))
+  "Eval request string in :shop2-user package.
+   Return a list of the three elements
+    - result of evaluation
+    - any output to *standard-output*
+    - any output to *err-output*"
+  (let ((std-out-str (make-array '(0) :element-type 'base-char
+					   :fill-pointer 0 :adjustable t))
+	(err-out-str (make-array '(0) :element-type 'base-char
+				      :fill-pointer 0 :adjustable t)))
+    (handler-case
+	(let* ((*package* (find-package :shop3-user))
+	       (form (read-from-string request-str))
+	       (result (with-output-to-string (*standard-output* std-out-str)
+			 (with-output-to-string (*error-output* err-out-str)
+			   (eval form)))))
+	  (list result :break-here std-out-str :break-here err-out-str))
+      (serious-condition (e)
+	(log-msg  "Serious condition: ~A. Out string = ~S Error string = ~S" e std-out-str err-out-str)
+	:bad-input))))
 
-(defun server-loop (&optional (listen-address "tcp://*:31726")) ; See *endpoint* above.
+(defun server-loop (listen-address)
   "Translation of http://zguide.zeromq.org/c:hwserver updated for ZMQ 3. "
   (handler-case
       (pzmq:with-context (ctx :max-sockets 10) ; ctx is a variable not a function!
@@ -26,7 +38,7 @@
 		(progn (log-msg "Flushing ~S" (pzmq:recv-string responder :dontwait t))
 		       (sleep 1e-4))
 	      (pzmq:eagain ())))
-	  (log-msg "Entering server loop")
+	  (log-msg "Entering server loop. Listening on ~S." listen-address)
 	  (loop
 	    ;;(log-msg "Waiting for a request... ")
 	    (let ((got (pzmq:recv-string responder))) ; See above about more. (This will matter for if I send big defdomains.)
@@ -49,7 +61,10 @@
     (serious-condition (c)
       (log-msg "Serious condition, exiting loop: ~S" c))))
 
-(defun start-server () (server-loop))
+(defun start-server ()
+  (if *endpoint*
+      (server-loop *endpoint*)
+      (log-msg "Endpoint port not set. Not starting.")))
 
 (defun send-server-stop-msg ()
   "Send '(sb-ext:exit)' which means stop. For debugging, I think."

@@ -22,4 +22,4 @@
 ;;; Since this one start the server, you don't want to use it with slime anyway.
 ;;; In schedulingTBD, or just from a shell, you can use this simply by doing  ./pzmq-shop3-2024-02-15
 ;;;                                                                        or ./pzmq-shop3-2024-02-15 --non-interactive --disable-debugger.
-(sb-ext:save-lisp-and-die "pzmq-shop3-2024-02-15" :purify t :executable t :toplevel 's3zmq:start-server)
+(sb-ext:save-lisp-and-die "pzmq-shop3-2024-02-24" :purify t :executable t :toplevel 's3zmq:start-server)

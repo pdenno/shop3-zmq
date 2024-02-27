@@ -1,8 +1,8 @@
-(in-package :shop3-user)
+(in-package :shop3-zmq) ;; First you have to do the load below...
 
 ;;; I use this with slime with the REPL (in-package :shop3-user).
-;;; I evaluate these with C-x 3 REPL. F7
-
+;;; I evaluate these with C-c c one at a time. REPL is F7.
+(load "~/Documents/git/shop3-zmq/load-shop-interactive.lisp")
 
 ;;; ===================== To get started =================================
 (defdomain basic-example (
@@ -102,3 +102,28 @@
 ;;;    In this case, try using (SHOP-TRACE :GOALS), rerunning FIND-PLANS and check to see what’s happened when your problem method or operator’s preconditions are checked.
 ;;;
 ;;; This recipe has proven effective for finding the vast majority of bugs in SHOP2 domains.”
+
+
+;;;================================================================================
+;;; Now with the plan-server interface
+;;;================================================================================
+(start-server)
+
+;(shop3-zmq::send-server-stop-msg)
+
+(ask-shop
+"(defdomain basic-example (
+     (:operator (!pickup ?a) () () ((have ?a)))
+     (:operator (!drop ?a) ((have ?a)) ((have ?a)) ())
+     (:method (swap ?x ?y)
+       ((have ?x))
+       ((!drop ?x) (!pickup ?y))
+       ((have ?y))
+       ((!drop ?y) (!pickup ?x)))))")
+
+(shop3-zmq::ask-shop
+"(defproblem problem1 basic-example
+  ((have banjo)) ((swap banjo kiwi)))")
+
+(shop3-zmq::ask-shop
+ "(find-plans 'problem1 :verbose :plans)")
